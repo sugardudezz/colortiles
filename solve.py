@@ -1,56 +1,59 @@
 from game import *
 
-def get_possible_moves():
+def get_possible_moves(b):
 	ret = []
 	for y in range(size[1]):
 		for x in range(size[0]):
-			if (board[y][x] == 0):
-				prev = click_preview(x,y)
-				if prev > 0:
-					ret.append([x,y,prev])
+			if (b[y][x] == 0):
+				prev = click_preview(x,y,b)
+				if len(prev.removed) > 0:
+					ret.append([x,y,len(prev.removed)])
 	return ret
 
-solution = []
-def greedy():
+def tiles_left(b):
+	zeros = 0
+	for row in b:
+		zeros += row.count(0)
+	return size[0]*size[1] - zeros
+
+
+def greedy2(board):
+	solution = []
 	while True:
-		moves = get_possible_moves()
+		moves = get_possible_moves(board)
 		if len(moves) == 0:
-			print(f'sol: {solution}')
-			return
+			print(f'greedy2 sol: {solution}')
+			print(f'tiles left: {tiles_left(board)}')
+			return tiles_left(board)
 		
-		check = None
-		for i in [4,3,2]:
-			for m in moves:
-				if (m[2] == i):
-					check = m
-					break
-			if check != None:
-				break
+		odd_colors = []
+
+		for c in range(colors):
+			c = c+1
+			if (board.count(c)) % 2 == 1:
+				odd_colors.append(c)
 		
-		if (check):
-			click(check[0], check[1])
-			print_board()
-			solution.append(check)
+		evaluation = [0]*len(moves)
 
-'branch and bound 알고리즘 생각'
+		for i in range(len(moves)):
+			temp_board = copy.deepcopy(board)
+			click(moves[i][0], moves[i][1], temp_board)
+			evaluation[i] += (len(get_possible_moves(temp_board)))
 
-'''
-def branch_and_bound():
-	moves = get_possible_moves()
-	if len(moves) == 0:
-		print(f'sol: {solution}')
-		return
-	
-	check = None
-	for i in [4,3,2]:
-		for m in moves:
-			if (m[2] == i):
-				check = m
-				break
-		if check != None:
-			break
-	
-	click(check[0], check[1])
-	print_board()
-	solution.append(check)
-'''
+			temp_odd_colors = []
+			for c in range(colors):
+				c = c+1
+				if (board.count(c)) % 2 == 1:
+					temp_odd_colors.append(c)
+			
+			if len(temp_odd_colors) < len(odd_colors):
+				evaluation[i] *= size[0]*size[1]
+
+
+		best = moves[evaluation.index(max(evaluation))]
+
+		if (best):
+			cleared = click(best[0], best[1], board)
+			print_board(board)
+			print(f'타일 {len(cleared.removed)}개 클리어')
+			solution.append(best)

@@ -2,45 +2,47 @@
 #180개
 #23x15
 import random
+import copy
 
 #판 크기
-size = [6,4]
+size = [9,5]
 
 #색 종류
 colors = 3
+
+tiles_per_color = size[0]*size[1]/2//colors
 
 #점수
 score = 0
 
 choose = [x+1 for x in range(colors)]
 choose += [0]*colors
-board = [[random.choice(choose) for _ in range(size[0])] for _ in range(size[1])]
-temp_board = []
+class Board:
+	content = []
+	def __init__(self):
+		self.content = [[random.choice(choose) for _ in range(size[0])] for _ in range(size[1])]
 
-def print_board():
+def print_board(board):
 	for i in board:
 		print(i)
 
-def Board(x,y):
-	return board[y][x]
+class ClickInfo:
+	removed = []
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+		self.removed = []
 
-def _click(x, y, editMap):
-	if (Board(x,y) != 0):
+def _click(x, y, editMap, board):
+	if (board[y][x] != 0):
 		print('빈공간이 아니네요')
 		return 0
 	if x < 0 or x >= size[0] or y < 0 or y >= size[1]:
 		print('잘못된 좌표')
 		return 0
-	
-	temp_board = []
-	for i in board:
-		l = []
-		for j in i:
-			l.append(j)
-		temp_board.append(l)
 
 	value_count = [0]*(colors+1)
-	total = 0
+	ret = ClickInfo(x,y)
 
 	dx = [-1, 1, 0, 0]
 	dy = [ 0, 0, -1, 1]
@@ -70,16 +72,14 @@ def _click(x, y, editMap):
 			horizontal = posX[i]
 			vertical = posY[i]
 			if(horizontal >= 0 and vertical >= 0):
-				temp_board[vertical][horizontal] = 0
 				if (editMap):
 					board[vertical][horizontal] = 0
-				total += 1
-	if (editMap):
-		print(f'타일 {total}개 클리어')
-	return total
+				ret.removed.append([horizontal, vertical])
 
-def click(x,y):
-	return _click(x,y,True)
+	return ret
 
-def click_preview(x,y):
-	return _click(x,y,False)
+def click(x,y,board):
+	return _click(x,y,True,board)
+
+def click_preview(x,y,board):
+	return _click(x,y,False,board)
